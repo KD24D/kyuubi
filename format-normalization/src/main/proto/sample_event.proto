@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package com.example.gateway.schemas.protobuf; // Output Java package
+
+option java_multiple_files = true;
+option java_outer_classname = "SampleEventProto"; // Not strictly needed with java_multiple_files = true
+
+message SampleEvent {
+  string event_id = 1;
+  string event_type = 2;
+  int64 timestamp = 3;
+  map<string, string> attributes = 4;
+  Data nested_data = 5;
+}
+
+message Data {
+  string field_a = 1;
+  int32 field_b = 2;
+}

@@ -1,0 +1,64 @@
+server:
+  port: 8080 # Main application port for HTTP adapter (if hosted in gateway-app)
+
+spring:
+  application:
+    name: data-gateway
+  main:
+    banner-mode: "off"
+  kafka: # Example for Kafka producer/consumer if not defined elsewhere
+    producer:
+      bootstrap-servers: localhost:9092 # Default, override in specific profiles or env vars
+      # value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    consumer:
+      bootstrap-servers: localhost:9092
+      # group-id: defined by specific adapter configs
+
+logging:
+  level:
+    root: INFO
+    com.example.gateway: DEBUG
+
+gateway:
+  # Central hub for all gateway-specific configurations
+  # Example: Default route destination for RoutingService
+  routing:
+    default-destination:
+      type: KAFKA_TOPIC # Values from com.example.gateway.core.model.DestinationType
+      target: "unrouted-events-dlq-from-config"
+      properties:
+        reason: "no_matching_route_rule_configured"
+    # Rules will be loaded from a separate file or structured list here
+    rules-config-path: "classpath:routing-rules.yaml" # Example path
+    # Example of embedding rules directly (alternative to rules-config-path)
+    # rules:
+    #   - id: "embedded_rule_1"
+    #     description: "Embedded sample rule"
+    #     priority: 100
+    #     conditionSpel: "transformedPayload['source'] == 'embedded_test'"
+    #     destination:
+    #       type: KAFKA_TOPIC
+    #       target: "embedded-rule-test-topic"
+    #     targetIsSpel: false
+
+  rate-limiting:
+    # Placeholder for rate limiting configs
+    default-bucket:
+      id: "default_global"
+      capacity: 1000
+      refill-period-seconds: 60
+
+  transformation-engine:
+    script-location-pattern: classpath:/scripts/**/*.groovy # Already implemented this way
+    cache-scripts: true
+
+# Placeholder for protocol adapter specific configurations
+# These could be extensive and might be better in separate files imported by Spring.
+# gateway:
+#   protocol-adapters:
+#     kafka:
+#       consumers:
+#         - name: "orders-consumer-config"
+#           topics: "configured-orders-topic"
+#           groupId: "configured-orders-group"
+#           # other kafka consumer props

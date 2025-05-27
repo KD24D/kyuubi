@@ -1,0 +1,9 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':gateway-core')
+    implementation 'org.apache.groovy:groovy-all:4.0.15' // Groovy, check latest
+    implementation 'com.jayway.jsonpath:json-path:2.8.0' // JSONPath
+}

@@ -1,0 +1,4 @@
+plugins {
+    id 'java-library'
+}
+// No specific dependencies here, submodules will declare their own.
