@@ -1,0 +1,118 @@
+server:
+  port: 8091 # Main application port, can be different from admin API port if admin API is separate
+
+gateway:
+  protocol-adapters:
+    http:
+      # Port for the main data ingestion HTTP adapter.
+      # This is distinct from server.port which might be used for Spring Boot Actuator / Admin API if they run on a different port.
+      # If the main app and admin run on the same port, this specific property might not be strictly needed
+      # as Spring WebFlux endpoints will share the main server.port.
+      # However, having it allows for potential future separation or clarity.
+      # For now, if HttpIngestionController is a @RestController in the main app context, it uses server.port.
+      # Let's assume for now it uses the main server.port.
+      # If a dedicated port for data ingestion was needed, it would require a separate WebServerFactory bean.
+      # port: 8080 # As per DESIGN.md (Section 9.1.2 refers to gateway.protocolAdapters.http.port)
+      # For simplicity in a single Spring Boot app, the main server.port (8091 here) will be used by default.
+      # If a separate port (e.g. 8080) for ingestion endpoints is required,
+      # it typically involves more complex setup (e.g. additional WebServerFactory beans).
+      # We will use a path configuration that works with the main server.port.
+      ingestion-path: "/ingest" # Configurable base path for ingestion endpoints
+      enabled: true # General flag to enable/disable this adapter (not directly used by @Value in controller path yet)
+
+logging:
+  level:
+    com.example.datagateway: DEBUG
+    org.springframework.web: INFO
+    reactor.netty.http.client: INFO # Useful for debugging WebClient calls if any
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092 # Default, can be overridden by specific consumer configs or env vars
+    consumer:
+      group-id: "default-gateway-group" # Default group ID, individual listeners should override
+      auto-offset-reset: "earliest"
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+    listener:
+      ack-mode: manual_immediate # MANUAL_IMMEDIATE or MANUAL
+
+gateway:
+  protocol-adapters:
+    kafka:
+      consumers:
+        - name: "default-consumer" # Used for SpEL in @KafkaListener for topics/groupId
+          enabled: true
+          topics: "topic1,orders-json,orders-protobuf" # Comma-separated list
+          groupId: "gateway-main-consumer-group"
+          # bootstrapServers: "override-kafka:9092" # Optional: to override global spring.kafka.bootstrap-servers
+          # properties: # Optional Kafka consumer properties for this specific consumer
+          #   fetch.min.bytes: "1024"
+          #   security.protocol: "SASL_SSL"
+          payloadTypeMappings: # Optional: for determining PayloadType
+            - topic: "orders-json"
+              payloadType: "JSON"
+            - topic: "orders-protobuf" # For this topic, we expect a header to define the type
+              header: "X-Payload-Format" # e.g., X-Payload-Format: PROTOBUF
+            # A mapping can also just specify a header without a topic to apply to all topics for this consumer
+            # - header: "X-Default-Format" 
+            #   payloadType: "TEXT" 
+          defaultPayloadType: "BINARY" # Fallback for this consumer if no other mapping matches
+
+        - name: "log-consumer"
+          enabled: false # Example of a disabled consumer
+          topics: "activity-logs"
+          groupId: "gateway-log-consumer-group"
+          defaultPayloadType: "TEXT"
+          # properties:
+          #   max.poll.records: "10"
+    mqtt:
+      subscribers:
+        - name: "default-iot-subscriber"
+          enabled: true # Set to false to disable this subscriber
+          brokerUrl: "tcp://localhost:1883" # Default, overridable by ENV or specific deployment config
+          # clientIdPrefix: "gateway-sub" # Default in MqttAdapterProperties if uniqueClientId not set
+          uniqueClientId: "data-gateway-main-sub" # Example of a fixed client ID
+          # username: "user" # Optional
+          # passwordPlaceholder: "${MQTT_BROKER_PASSWORD}" # Placeholder for environment variable
+          topics: ["sensor/+/data", "device/status/#", "custom/payloadtype/topic"]
+          qos: [1, 0, 2] # QoS per topic; size must match topics list, or default will be used
+          automaticReconnect: true
+          cleanSession: true
+          connectionTimeoutSec: 30
+          keepAliveIntervalSec: 60
+          defaultPayloadType: "JSON" # Fallback if no mapping or user property matches
+          payloadTypeMappings:
+            - topicPattern: "sensor/.*/raw" # Regex for topic matching
+              payloadType: "BINARY"
+            - userProperty: "X-Payload-Type" # MQTTv5 User Property key to check for PayloadType string
+            # If userProperty is specified, its value will be used as PayloadType, e.g. "PROTOBUF"
+            # The 'payloadType' field in this mapping is implicitly used if userProperty value matches an enum.
+            # For this design, we'll assume the value of X-Payload-Type directly maps to a PayloadType enum string.
+            # Or, you could have:
+            # - userProperty: "X-Payload-Type"
+            #   payloadType: "PROTOBUF" # This would mean IF X-Payload-Type header is present (any value), use PROTOBUF.
+            #   More sophisticated logic would be in determinePayloadType method.
+            # For now, the design in MqttIngestionService implies value of userProperty is the PayloadType string.
+            - topicPattern: "custom/payloadtype/topic" # Example for a specific topic
+              payloadType: "TEXT"
+
+
+# Example of how other configurations from DESIGN.md Section 9 would fit:
+# gateway:
+#   admin-api:
+#     port: 8090 # Admin port
+#   transformationEngine:
+#     scriptPaths: ["classpath:/transformations/", "file:./config/transformations/"]
+#   # ... other configurations ...
+
+management: # Spring Boot Actuator settings
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,env,configprops,loggers"
+  endpoint:
+    health:
+      show-details: always
+# prometheus metrics will be available at /actuator/prometheus if micrometer-registry-prometheus is on classpath
+# For now, the http-adapter doesn't add micrometer-registry-prometheus, but gateway-app might in future.

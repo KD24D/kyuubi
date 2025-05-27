@@ -1,0 +1,9 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':gateway-core')
+    implementation 'org.springframework.integration:spring-integration-mqtt' // Spring Integration for MQTT
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5' // Paho client
+}

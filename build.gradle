@@ -1,0 +1,37 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.0' apply false // Manages Spring Boot dependency versions
+    id 'io.spring.dependency-management' version '1.1.4' apply false
+    id 'java'
+}
+
+allprojects {
+    group = 'com.example.gateway'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    dependencyManagement {
+        imports {
+            mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+        }
+    }
+
+    dependencies {
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+        sourceCompatibility = '17' // Or your chosen Java version from TECHNOLOGY_STACK.md
+        targetCompatibility = '17'
+    }
+}

@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':gateway-core')
+    implementation 'org.springframework.boot:spring-boot-starter' // For SpEL if used with Spring context
+    implementation 'com.bucket4j:bucket4j-core:8.7.0' // Bucket4J, check latest
+    // For distributed Bucket4J (example with JCache API)
+    // implementation 'javax.cache:cache-api:1.1.1'
+    // implementation 'com.bucket4j:bucket4j-jcache:8.7.0'
+}
