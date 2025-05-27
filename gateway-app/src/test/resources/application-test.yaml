@@ -1,0 +1,56 @@
+# gateway-app/src/test/resources/application-test.yaml
+logging:
+  level:
+    com.example.gateway: DEBUG # More verbose logging for tests
+    # org.springframework.boot.test: DEBUG
+
+# Example: Override Kafka topics or disable certain adapters for specific test profiles
+gateway:
+  routing:
+    default-destination:
+      type: KAFKA_TOPIC # Ensure enum values are correct
+      target: "test-unrouted-events" # Use a test-specific DLQ
+    # Override rules for testing specific paths.
+    # This list will replace any rules defined in the main application.yaml under gateway.routing.rules
+    # or rules loaded from rules-config-path if that path is also defined in application-test.yaml
+    rules: 
+      - id: "test_http_rule_json"
+        description: "Test rule for HTTP JSON events"
+        priority: 1
+        conditionSpel: "sourceInfo.requestTarget == '/ingest/testSourceHttp' && payloadType.name() == 'JSON'"
+        destination:
+          type: KAFKA_TOPIC # Ensure enum values are correct
+          target: "test-http-json-topic"
+        targetIsSpel: false
+
+# Disable external connections or use embedded versions if possible
+# For this example, we assume Kafka might be available or mocked.
+# If using Testcontainers or spring-kafka-test, configure bootstrap servers here.
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092 # Adjust if using embedded Kafka for tests
+    consumer:
+      bootstrap-servers: localhost:9092
+      # auto-startup: false # Consider controlling consumer startup for tests if testing Kafka ingress
+  main:
+    # Prevent Spring Boot from trying to connect to services like Kafka during contextLoads test
+    # if they are not meant to be available for all tests.
+    # For @SpringBootTest, these are usually needed if the app expects them.
+    # If using @MockBean for things like KafkaTemplate, this might not be an issue.
+    # web-application-type: none # Use this if no web server is needed for certain test slices
+    lazy-initialization: true # Can speed up test context loading by only creating beans as needed
+  # Security auto-configuration can be disabled for tests if not specifically testing security
+  # security:
+  #   basic:
+  #     enabled: false
+  # management:
+  #   endpoints:
+  #     web:
+  #       exposure:
+  #         include: "*" # Expose all actuator endpoints for testing if needed
+  #     enabled-by-default: true
+
+# Ensure Spring Shell is not activated during tests unless specifically testing CLI features
+spring.shell.interactive.enabled: false
+spring.shell.command.script.enabled: false

@@ -1,0 +1,37 @@
+plugins {
+    id 'java-library'
+    id 'com.google.protobuf' version '0.9.4' // For compiling .proto files
+}
+
+dependencies {
+    implementation project(':gateway-core')
+    implementation 'io.grpc:grpc-netty-shaded:1.60.0' // Check for latest
+    implementation 'io.grpc:grpc-protobuf:1.60.0'
+    implementation 'io.grpc:grpc-stub:1.60.0'
+    implementation 'io.projectreactor.grpc:reactor-grpc-stub:1.2.3' // Check for latest
+
+    // Ensure generated gRPC code can find TomP2P's classes if needed by .proto
+    // compileOnly 'javax.annotation:javax.annotation-api:1.3.2' // For @Generated
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.1" // Check for latest
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.60.0'
+        }
+        reactorGrpc {
+            artifact = 'io.projectreactor.grpc:protoc-gen-reactor-grpc:1.2.3'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                grpc {}
+                reactorGrpc {}
+            }
+        }
+    }
+}

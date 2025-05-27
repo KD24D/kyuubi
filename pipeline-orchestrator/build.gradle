@@ -1,0 +1,39 @@
+dependencies {
+    api project(':gateway-core')
+    api project(':protocol-adapters:http-adapter') // For specific exceptions like RateLimitExceededException if defined there
+    api project(':format-normalization')
+    api project(':transformation-engine')
+    api project(':routing-limiting-layer')
+
+    implementation 'io.projectreactor:reactor-core' // Usually transitive via webflux, but good to be explicit
+    // implementation 'org.springframework.boot:spring-boot-starter-webflux' // If it needs webflux features directly
+
+    // Resilience4j for retry, circuit breaker, etc.
+    implementation 'io.github.resilience4j:resilience4j-reactor:2.2.0' // Specify version
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0' // Specify version
+
+    // Lombok is already in allprojects
+}
+
+// Add a task to create a dummy Java class
+task createPlaceholderClass(type: WriteProperties) {
+    group = 'build setup'
+    description = 'Creates a placeholder Java class in pipeline-orchestrator.'
+    outputFile = file("$projectDir/src/main/java/com/example/datagateway/pipeline/PipelineOrchestratorService.java")
+    property('placeholder', """\
+package com.example.datagateway.pipeline;
+
+// Placeholder for pipeline orchestration logic
+public class PipelineOrchestratorService {
+    public static String getGreeting() {
+        return "Hello from Pipeline Orchestrator!";
+    }
+}
+""")
+    doLast {
+        def placeholderFile = file("$projectDir/src/main/java/com/example/datagateway/pipeline/PipelineOrchestratorService.java")
+        placeholderFile.parentFile.mkdirs()
+        placeholderFile.text = getProperties().get('placeholder')
+    }
+}
+classes.dependsOn(createPlaceholderClass)

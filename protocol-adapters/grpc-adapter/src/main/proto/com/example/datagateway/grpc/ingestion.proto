@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package com.example.datagateway.grpc;
+
+option java_multiple_files = true;
+option java_package = "com.example.datagateway.grpc.gen"; // Gen suffix to differentiate from our own models
+option java_outer_classname = "IngestionProto";
+
+// Service for ingesting data into the gateway
+service DataIngestionService {
+  // Ingests a single data payload
+  rpc IngestData (IngestRequest) returns (IngestResponse);
+  // Future consideration: rpc IngestStream (stream IngestRequest) returns (IngestResponse);
+}
+
+// Matches the PayloadType enum in gateway-core for internal mapping.
+// This ensures clients can specify the type using gRPC enums.
+enum GrpcPayloadType {
+  GRPC_PAYLOAD_TYPE_UNKNOWN = 0; // Default, maps to core.model.PayloadType.UNKNOWN
+  GRPC_PAYLOAD_TYPE_JSON = 1;    // Maps to core.model.PayloadType.JSON
+  GRPC_PAYLOAD_TYPE_PROTOBUF = 2;// Maps to core.model.PayloadType.PROTOBUF
+  GRPC_PAYLOAD_TYPE_XML = 3;     // Maps to core.model.PayloadType.XML
+  GRPC_PAYLOAD_TYPE_CSV = 4;     // Maps to core.model.PayloadType.CSV
+  GRPC_PAYLOAD_TYPE_BINARY = 5;  // Maps to core.model.PayloadType.BINARY
+  GRPC_PAYLOAD_TYPE_TEXT = 6;    // Maps to core.model.PayloadType.TEXT
+}
+
+message IngestRequest {
+  // Optional: Client can provide a request ID for tracing.
+  // If not provided, the gateway will generate one.
+  string client_request_id = 1;
+
+  // Metadata for the request (e.g., source system identifiers, content encoding hints)
+  map<string, string> metadata = 2;
+
+  // The type of the payload.
+  GrpcPayloadType payload_type = 3;
+
+  // The actual data payload.
+  bytes payload = 4;
+}
+
+message IngestResponse {
+  // The request ID assigned by the gateway (either propagated from client_request_id or generated).
+  string gateway_request_id = 1;
+
+  // A status message from the gateway.
+  string status_message = 2;
+
+  // Potentially include error codes or more detailed status information in future iterations.
+  // int32 error_code = 3;
+}

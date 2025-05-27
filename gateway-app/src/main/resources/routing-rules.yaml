@@ -1,0 +1,24 @@
+# Sample routing-rules.yaml
+# This structure mirrors RoutingProperties.RuleConfig list if loaded directly by a custom loader.
+# Alternatively, if Spring loads this into RoutingProperties.rules, then the prefix "rules:" is not needed at top level.
+# For this example, let's assume this file will be parsed and its content directly used to populate RoutingService.
+# The RoutingProperties.rules list is an alternative way to define rules directly in application.yaml.
+
+rules:
+  - id: "config_order_logs"
+    description: "Route order logs from config"
+    priority: 15
+    conditionSpel: "transformedPayload['type'] == 'order_log'"
+    destination:
+      type: KAFKA_TOPIC
+      target: "order-logs-topic-from-config"
+    targetIsSpel: false # Target is literal
+
+  - id: "config_dynamic_user_events"
+    description: "Route user events by user ID (dynamic topic) from config"
+    priority: 25
+    conditionSpel: "transformedPayload['eventType'] == 'USER_ACTION' && transformedPayload['userId'] != null"
+    destination:
+      type: KAFKA_TOPIC
+      target: "'user-actions-' + transformedPayload['userId']" # SpEL for target
+    targetIsSpel: true # Target is SpEL
