@@ -1,0 +1,45 @@
+plugins {
+    id 'java-library'
+    id 'com.google.protobuf' version '0.9.4' // Added Protobuf plugin
+}
+
+// Protobuf configuration
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.1" // Specify protoc version
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    // Output directory for generated Java files
+                    // This will be relative to build/generated/source/proto/main/java
+                    // The package will be derived from the .proto file's package option
+                }
+            }
+        }
+    }
+    // Optional: Specify where your .proto files are, default is src/main/proto
+    // sourceSets {
+    //     main {
+    //         proto {
+    //             srcDir 'src/main/proto'
+    //         }
+    //     }
+    // }
+}
+
+dependencies {
+    implementation project(':gateway-core')
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml' // For config if needed here
+    implementation 'com.networknt:json-schema-validator:1.3.3' // Check latest
+    implementation 'com.google.protobuf:protobuf-java:3.25.1'
+    implementation 'com.google.protobuf:protobuf-java-util:3.25.1' // For JsonFormat
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+    implementation 'org.apache.parquet:parquet-avro:1.13.1' // Check latest
+    implementation 'org.apache.avro:avro:1.11.3' // Check latest
+    // Hadoop client is often a transitive dependency for Parquet, but can be explicit if needed
+    // implementation 'org.apache.hadoop:hadoop-client-runtime:3.3.6'
+    // implementation 'org.apache.hadoop:hadoop-common:3.3.6' (be mindful of version conflicts)
+}

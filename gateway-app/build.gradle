@@ -1,0 +1,34 @@
+plugins {
+    id 'org.springframework.boot.application' // Spring Boot application plugin
+    id 'java'
+}
+
+dependencies {
+    implementation project(':gateway-core')
+    implementation project(':protocol-adapters:http-adapter')
+    implementation project(':protocol-adapters:kafka-adapter')
+    implementation project(':protocol-adapters:grpc-adapter')
+    implementation project(':protocol-adapters:mqtt-adapter')
+    implementation project(':format-normalization')
+    implementation project(':transformation-engine')
+    implementation project(':routing-limiting-layer')
+    // If admin-api is a separate runnable app, it has its own main class.
+    // If it's a library of controllers for gateway-app:
+    // implementation project(':admin-api')
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // For /health, /metrics etc.
+    implementation 'org.springframework.boot:spring-boot-starter-security' // If Admin API security is here
+
+    // OpenTelemetry SDK and Exporter (example Jaeger)
+    implementation 'io.opentelemetry:opentelemetry-sdk:1.32.0'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp:1.32.0'
+    implementation 'io.opentelemetry:opentelemetry-extension-annotations:1.32.0'
+    // Auto-instrumentation agent can also be used, but explicit SDK setup is fine.
+
+    runtimeOnly 'org.projectlombok:lombok' // Already in allprojects, but good to be explicit for runtime if needed
+    annotationProcessor 'org.projectlombok:lombok'
+}
+
+application {
+    mainClass = 'com.example.gateway.GatewayApplication' // Replace with your actual main class
+}

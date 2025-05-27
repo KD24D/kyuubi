@@ -1,0 +1,15 @@
+// settings.gradle
+rootProject.name = 'data-gateway'
+
+include 'admin-api'
+include 'format-normalization'
+include 'gateway-app'
+include 'gateway-core' // Ensure this will contain orchestration logic + core data structures
+// include 'pipeline-orchestrator' // Comment out if merging its role into gateway-core for now
+include 'protocol-adapters'
+include 'protocol-adapters:grpc-adapter'
+include 'protocol-adapters:http-adapter'
+include 'protocol-adapters:kafka-adapter'
+include 'protocol-adapters:mqtt-adapter'
+include 'routing-limiting-layer'
+include 'transformation-engine'

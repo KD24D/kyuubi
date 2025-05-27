@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library' // Or 'org.springframework.boot.application' if it's a separate runnable app
+}
+
+dependencies {
+    implementation project(':gateway-core') // To access config, status, etc.
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // For REST controllers
+    implementation 'org.springframework.boot:spring-boot-starter-security' // For securing admin endpoints
+
+    // If it needs to interact with specific components for management:
+    // implementation project(':routing-limiting-layer')
+    // implementation project(':transformation-engine')
+}
